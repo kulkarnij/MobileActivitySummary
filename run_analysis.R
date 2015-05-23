@@ -63,9 +63,22 @@ readData <- function(...) {
 pruneFrame <- function(dframe) {
   colNames <- as.vector(featureName[,2])
   # Do any processing such as lower case, barcket removal etc. here.
-  #colNames <- c("activity", "subject",colNames)
+
+  #Make syntatically correct names by removing special characters so that
+  #the summary output, when read-back has the same column names.
+  #If special characters are present, read.tables() uses make.names to replace
+  #them with "." which results in less than readable name.
   
-  #
+  #Replace "angle(" with "angle_"
+  colNames <- gsub("angle\\(","angle_",colNames)
+  #Remove ()
+  colNames <- gsub("\\(","",colNames)
+  colNames <- gsub("\\)","",colNames)
+
+  #Replace "," and "-" with "_"
+  colNames <- gsub("\\,","_",colNames)
+  colNames <- gsub("\\-","_",colNames)
+  
   colnames(dframe) <- colNames
   selectedColumns = grep(paste(meanString,"|",stdString,sep=""),colNames)
   prunedTestData = dframe[,selectedColumns]
@@ -165,7 +178,7 @@ library("reshape2")
 totalMelt <- melt(total,id=c("activity","participantNumber"),measure.vars=varNames)
 sumData <- dcast(totalMelt, activity+participantNumber ~ variable, mean)
 sumNames <- colnames(sumData[,-(1:2)])
-sumNames<-paste("mean(",sumNames,")",sep="")
+sumNames<-paste("mean_",sumNames,sep="")
 colnames(sumData)<-c("activity","participantNumber",sumNames)
 
 write.table(sumData, file = outFile, row.names=FALSE)
